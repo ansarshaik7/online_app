@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: online-app-service
+  namespace: online-app
+spec:
+  selector:
+    app: online-app
+  ports:
+  - name: online-app
+    protocol: TCP
+    port: 80
+    targetPort: 80
+  type: NodePort     

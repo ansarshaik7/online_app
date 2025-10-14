@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  online_app:
+    build: .
+    container_name: online_app
+    restart: always
+    ports:
+      - "8082:80"
+    networks:
+      - "online_app-network"
+
+networks:
+  online_app-network:
+    driver: bridge
+    
+

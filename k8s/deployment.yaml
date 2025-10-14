@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: online-deployment
+  namespace: online-app
+  labels:
+    app: online-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: online-app
+  template:
+    metadata:
+      labels:
+        app: online-app
+    spec:
+      imagePullSecrets:
+      - name: online-app-login
+      containers:
+      - name: online-app
+        image: ansarshaik/new_repo:online_app
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        envFrom:
+        - configMapRef:
+            name: online-app-configmap
