@@ -1,0 +1,63 @@
+pipeline {
+    agent any
+    // tools {
+    //     maven 'Maven'
+    // }
+    
+    stages {
+        stage('gitclone') {
+            steps {
+                git branch: 'main', url: 'https://github.com/ansarshaik7/online_app'
+            }
+        }
+        
+        stage('gitrepo-trivyscan') {
+            steps {
+                sh 'trivy repo --format json --output trivy-reportrepo.json https://github.com/ansarshaik7/online_app'
+            }
+        }
+        
+        stage('docker-build') {
+            steps {
+                sh 'docker build -t online_app:latest .'
+                 sh 'docker tag online_app:latest ansarshaik/new_repo:latest'
+            }
+        }
+        
+        stage('dockerimage-trivy-scan') {
+            steps {
+                sh 'trivy image --format json --output trivy-reportimage.json online_app:latest'
+            }
+        }
+        
+        stage('dockerhub-login&push') {
+            steps {
+                withDockerRegistry([credentialsId: 'docker-cred', url: 'https://index.docker.io/v1/']) {
+                sh 'docker push ansarshaik/new_repo:latest'
+                }
+            }
+        }
+        
+        stage('k8-apply') {
+            steps {
+                sh '''
+                cd k8s
+                ls -lrt
+                kind delete cluster --name kind-cluster || true
+                kind create cluster --name kind-cluster
+                kubectl config use-context kind-kind-cluster
+                kubectl apply -f namespace.yaml
+                kubectl apply -f configmap.yaml
+                kubectl apply -f secrets.yaml
+                kubectl apply -f deployment.yaml
+                kubectl apply -f service.yaml
+                kubectl create namespace ingress-nginx
+                kubectl apply -f ingress-values.yaml
+                kubectl apply -f ingress.yaml
+                kubectl apply -f hpa.yaml
+                kubectl get all -n online-app
+                '''
+            }
+        }
+    }
+}
